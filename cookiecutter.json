@@ -1,6 +1,6 @@
 {
   "github_username": "castlecraft",
-  "project_name": "Castlecraft Architect Boilerplate",
+  "project_name": "Castlecraft Frappe Custom",
   "project_slug": "{{ cookiecutter.project_name.lower().replace(' ', '_').replace('-', '_') }}",
   "container_image_namespace": "castlecraft",
   "project_version": "v0.0.1",
