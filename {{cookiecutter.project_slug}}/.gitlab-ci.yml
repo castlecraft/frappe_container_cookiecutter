@@ -1,0 +1,38 @@
+default:
+  image: docker:24.0.5
+  services:
+    - docker:24.0.5-dind
+
+variables:
+  DOCKER_TLS_CERTDIR: "/certs"
+
+stages:
+  - build
+
+build:
+  stage: build
+  when: manual
+  before_script:
+    - apk add -U git
+    - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN registry.gitlab.com
+  script:
+    - |
+      git clone https://github.com/frappe/frappe_docker
+      source ./build.env
+      export APPS_JSON_BASE64=$(base64 -w 0 ./apps.json)
+      export IMAGE_NAME=${REGISTRY}/${PROJECT_NAMESPACE}/${PROJECT_NAME}/${IMAGE}:$(cat ./version.txt)
+      export IMAGE_NAME_LATEST=${REGISTRY}/${PROJECT_NAMESPACE}/${PROJECT_NAME}/${IMAGE}:latest
+      cd frappe_docker
+      docker build \
+        --build-arg=FRAPPE_PATH=${FRAPPE_REPO}\
+        --build-arg=FRAPPE_BRANCH=${FRAPPE_VERSION}\
+        --build-arg=PYTHON_VERSION=${PY_VERSION}\
+        --build-arg=NODE_VERSION=${NODEJS_VERSION}\
+        --build-arg=APPS_JSON_BASE64=${APPS_JSON_BASE64} \
+        --tag=${IMAGE_NAME} \
+        --file=${DOCKERFILE} .
+      docker push ${IMAGE_NAME}
+      docker tag ${IMAGE_NAME} ${IMAGE_NAME_LATEST}
+      docker push ${IMAGE_NAME_LATEST}
+  tags:
+    - castlecraft

@@ -1,0 +1,8 @@
+{
+  "github_username": "castlecraft",
+  "project_name": "Castlecraft Architect Boilerplate",
+  "project_slug": "{{ cookiecutter.project_name.lower().replace(' ', '_').replace('-', '_') }}",
+  "container_image_namespace": "castlecraft",
+  "project_version": "v0.0.1",
+  "license": ["MIT license", "BSD license", "ISC license", "Apache Software License 2.0", "GNU General Public License v3", "Not open source"]
+}

@@ -1,0 +1,71 @@
+name: Build and Push Image
+
+on:
+  workflow_call:
+    inputs:
+      build_env:
+        required: true
+        type: string
+        description: "'staging' or 'production'"
+      docker_username:
+        required: true
+        type: string
+      repo_username:
+        required: true
+        type: string
+
+    secrets:
+      DOCKER_DEPLOYMENT_TOKEN:
+        required: true
+      MACHINE_USER_PAT:
+        required: true
+
+jobs:
+  build:
+    name: Build and Push Image
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Entire Repository
+        uses: actions/checkout@v4
+
+      - name: Login to Container Registry
+        uses: docker/login-action@v3
+        with:
+          username: ${{'{{'}} inputs.docker_username }}
+          password: ${{'{{'}} secrets.DOCKER_DEPLOYMENT_TOKEN }}
+
+      - name: Set Environment Variables
+        run: |
+          echo "Add common/build.env to github env"
+          cat ./common/build.env >> $GITHUB_ENV
+          source ./common/build.env
+
+          echo "Add APPS_JSON_BASE64 to github env"
+          export APP_JSONS=${{'{{'}} inputs.build_env }}
+          export REPO_PAT=${{'{{'}} secrets.MACHINE_USER_PAT }}
+          export REPO_USER=${{'{{'}} inputs.repo_username }}
+          echo "APPS_JSON_BASE64=$(python scripts/generate_apps_json.py --template template-apps.json | base64 -w 0)" >> $GITHUB_ENV
+
+          echo "Add IMAGE_NAME as per build_env to github env"
+          export CUSTOM_APP_BRANCH=$(jq -r 'map(select(.url | . and contains("github.com/{{cookiecutter.github_username}}/{{cookiecutter.project_slug}}")))' ${{'{{'}} inputs.build_env }}/template-apps.json | jq -r ".[0].branch")
+          [[ "${CUSTOM_APP_BRANCH}" == "develop" ]] && export VERSION=frappe || export VERSION="${CUSTOM_APP_BRANCH}"
+          echo "IMAGE_NAME=${REGISTRY}/${PROJECT_NAMESPACE}/${PROJECT_NAME}:${VERSION}" >> $GITHUB_ENV
+
+      - uses: actions/checkout@v4
+        with:
+          repository: frappe/frappe_docker
+          path: builds
+
+      - name: Build and Push
+        run: |
+          docker build \
+            --build-arg=FRAPPE_PATH=${{'{{'}} env.FRAPPE_PATH }}\
+            --build-arg=FRAPPE_BRANCH=${{'{{'}} env.FRAPPE_BRANCH }}\
+            --build-arg=PYTHON_VERSION=${{'{{'}} env.PYTHON_VERSION }}\
+            --build-arg=NODE_VERSION=${{'{{'}} env.NODE_VERSION }}\
+            --build-arg=APPS_JSON_BASE64=${{'{{'}} env.APPS_JSON_BASE64 }} \
+            --tag=${{'{{'}} env.IMAGE_NAME }} \
+            --file=${{'{{'}} env.DOCKERFILE }} builds
+          docker push ${{'{{'}} env.IMAGE_NAME }}

@@ -1,0 +1,10 @@
+[
+    {
+        "url": "https://github.com/frappe/erpnext.git",
+        "branch": "v15.66.0"
+    },
+    {
+        "url": "https://{{'{{'}} env['REPO_USER'] }}:{{'{{'}} env['REPO_PAT'] }}@github.com/{{cookiecutter.github_username}}/{{cookiecutter.project_slug}}.git",
+        "branch": "develop"
+    }
+]

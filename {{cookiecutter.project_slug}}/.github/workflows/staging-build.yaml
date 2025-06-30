@@ -1,0 +1,15 @@
+name: Staging Build and Push Image
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    uses: ./.github/workflows/build-and-push.yaml
+    with:
+      build_env: staging
+      docker_username: ${{'{{'}} vars.DOCKER_USERNAME }}
+      repo_username: ${{'{{'}} vars.REPO_USER }}
+    secrets:
+      DOCKER_DEPLOYMENT_TOKEN: ${{'{{'}} secrets.DOCKER_DEPLOYMENT_TOKEN }}
+      MACHINE_USER_PAT: ${{'{{'}} secrets.MACHINE_USER_PAT }}
